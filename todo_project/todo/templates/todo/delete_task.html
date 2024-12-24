@@ -1,0 +1,21 @@
+<!-- todo/templates/todo/delete_task.html -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Todo List</title>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    </head>
+<body>
+    <div class="container">
+        <h1>Are you sure you want to delete the task "{{ task.title }}"?</h1>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit">Yes, Delete</button>
+        </form>
+        <a href="{% url 'home' %}">Cancel</a>
+    </div>
+</body>
+</html>
