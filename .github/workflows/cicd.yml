@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for To-Do App
 
 on:
   push:
@@ -13,25 +13,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      # Step 2: Set up Docker (Install Docker)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 3: Log in to Docker Hub (or another registry if needed)
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - name: Cache Docker layers
+        uses: actions/cache@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          path: ~/.docker/buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
-      # Step 4: Build and push the Docker image
-      - name: Build and push Docker image
+      - name: Build Docker image
         run: |
-          docker buildx build -f docker/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/todo-list-app:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/todo-list-app:latest
+          # Build Docker image using the Dockerfile in the root directory
+          docker buildx build -f Dockerfile --platform linux/amd64,linux/arm64 -t my-app:$GITHUB_SHA .
+        
+      - name: Push Docker image
+        run: |
+          # Push the Docker image to the repository
+          docker push my-app:$GITHUB_SHA
 
-      # Optional: Add more steps to deploy the app or other tasks
+      - name: Set up Kubernetes (optional)
+        run: |
+          # Assuming you're using kubectl to deploy to a Kubernetes cluster
+          # If you want to apply the Kubernetes deployment and service files from the 'k8s' folder
+          kubectl apply -f k8s/deployment.yml
+          kubectl apply -f k8s/services.yml
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
