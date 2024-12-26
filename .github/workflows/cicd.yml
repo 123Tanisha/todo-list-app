@@ -27,21 +27,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Build Docker image
+      - name: Set up Kubernetes config
         run: |
-          # Build Docker image using the Dockerfile in the root directory
-          docker buildx build -f Dockerfile --platform linux/amd64,linux/arm64 -t my-app:$GITHUB_SHA .
-        
-      - name: Push Docker image
-        run: |
-          # Push the Docker image to the repository
-          docker push my-app:$GITHUB_SHA
+          echo "$KUBE_CONFIG" | base64 --decode > ~/.kube/config
 
-      - name: Set up Kubernetes (optional)
+      - name: Build and push Docker image
         run: |
-          # Assuming you're using kubectl to deploy to a Kubernetes cluster
-          # If you want to apply the Kubernetes deployment and service files from the 'k8s' folder
-          kubectl apply -f k8s/deployment.yml
-          kubectl apply -f k8s/services.yml
+          docker buildx build --platform linux/amd64,linux/arm64 -t my-app:$GITHUB_SHA .
+          docker push my-app:$GITHUB_SHA
         env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
